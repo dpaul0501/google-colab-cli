@@ -57,6 +57,8 @@ steps:
   #    google-artifactregistry-auth keyring plugin (uses ADC from the
   #    Cloud Build service account, which is registered as a builder in
   #    the project's project.txtpb).
+  #    Delete any existing artifact for this tag which can happen if the
+  #    build failed to publish in step 4.
   - id: publish-to-ar
     name: python:3.13-slim
     entrypoint: bash
@@ -66,6 +68,12 @@ steps:
         set -e
         pip install --quiet --root-user-action=ignore \
           twine keyrings.google-artifactregistry-auth
+        gcloud artifacts versions delete ${TAG_NAME}  \
+          --package={_EG_PROJECT_NAME} \
+          --project={_AR_PROJECT} \
+          --repository=${_AR_REPOSITORY} \
+          --location=us \
+          --quiet
         twine upload \
           --repository-url "https://${_AR_LOCATION}-python.pkg.dev/${_AR_PROJECT}/${_AR_REPOSITORY}/" \
           --verbose \
